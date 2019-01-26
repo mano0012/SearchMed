@@ -26,11 +26,11 @@ class Server:
 		#return acao, dados
 	
 	def run(self):
-		con, client = self.sock.accept()
-		
-		t = threading.Thread(target=self.mainMenu, args = con)
-		
-		t.start()
+		while(True):
+			con, client = self.sock.accept()
+			
+			t = threading.Thread(target=self.mainMenu, args = [con])
+			t.start()
 		
 	def mainMenu(self, con):
 		msg = con.recv(1024)
@@ -87,7 +87,7 @@ class Server:
 	def menuMedico(self):
 		print("1 - Consultar agenda")
 		
-	def enviarListaMedicos(self, con):
+	def enviarListaMedicos(self):
 		msg = "Medicos disponiveis:\n"
 		k = 1
 		for i in self.listaMedicos:
