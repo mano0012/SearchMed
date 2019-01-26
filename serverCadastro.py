@@ -7,6 +7,14 @@ import threading
 IP = "127.0.0.1"
 PORT = 9998
 
+'''
+TODO:
+Corrigir o JSON (Não esta funcionando)
+Terminar de implementar o agendamento
+Implementar Conexão com banco de dados (verificar a possibilidade do Heroku)
+Criar uma interface
+'''
+
 class Server:
 	def __init__(self):
 		self.listaMedicos = list()
@@ -31,7 +39,8 @@ class Server:
 			
 			t = threading.Thread(target=self.mainMenu, args = [con])
 			t.start()
-		
+	
+
 	def mainMenu(self, con):
 		msg = con.recv(1024)
 		acao, dados = pickle.loads(msg)
