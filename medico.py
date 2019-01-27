@@ -9,6 +9,7 @@ class Medico:
         self.email = None
         self.inicioExpediente = None
         self.fimExpediente = None
+        self.convenio = None
 
     #Dados pessoais
     def setNome(self, nome):
@@ -16,6 +17,9 @@ class Medico:
 
     def setSexo(self, sexo):
         self.sexo = sexo
+
+    def setConvenio(self, convenio):
+        self.convenio = convenio
 
     def setEspecialidade(self, especialidade):
         self.especialidade = especialidade
@@ -42,6 +46,7 @@ class Medico:
         self.setEmail(dados[6])
         self.setInicio(dados[7])
         self.setFim(dados[8])
+        self.setConvenio(dados[9])
 
     #Agenda
     def setInicio(self, inicio):
