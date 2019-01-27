@@ -1,51 +1,59 @@
-import horarios
-
 class Medico:
-	def __init__(self):
-		self.nome = None
-		self.especialidade = None
-		self.local = None
-		self.CRM = None
-		self.idade = None
-		self.email = None
-		self.agenda = horarios.Agenda()
-	
-	#Dados pessoais
-	def setNome(self, nome):
-		self.nome = nome
-	
-	def setEspecialidade(self, especialidade):
-		self.especialidade = especialidade
-	
-	def setLocal(self, local):
-		self.local = local
-		
-	def setCRM(self, CRM):
-		self.CRM = CRM
-		
-	def setIdade(self, idade):
-		self.idade = idade
-		
-	def setEmail(self, email):
-		self.email = email
-	
-	#Agenda
-	def setHorario(self, inicio, fim):
-		self.agenda.setInicio(inicio)
-		self.agenda.setFim(fim)
-		
-	def createJson(self):
-		output = [
-				{
-					"nome": self.nome,
-					"especialidade": self.especialidade,
-					"local": self.local,
-					"CRM": self.CRM,
-					"idade": self.idade,
-					"email": self.email,
-					"inicio": self.agenda.getInicio(),
-					"fim": self.agenda.getFim()
-				}
-        ]
-		
-		return output
+    def __init__(self):
+        self.nome = None
+        self.sexo = None
+        self.especialidade = None
+        self.local = None
+        self.CRM = None
+        self.idade = None
+        self.email = None
+        self.inicioExpediente = None
+        self.fimExpediente = None
+
+    #Dados pessoais
+    def setNome(self, nome):
+        self.nome = nome
+
+    def setSexo(self, sexo):
+        self.sexo = sexo
+
+    def setEspecialidade(self, especialidade):
+        self.especialidade = especialidade
+
+    def setLocal(self, local):
+        self.local = local
+
+    def setCRM(self, CRM):
+        self.CRM = CRM
+
+    def setIdade(self, idade):
+        self.idade = idade
+
+    def setEmail(self, email):
+        self.email = email
+
+    def createMedico(self, dados):
+        self.setCRM(dados[0])
+        self.setNome(dados[1])
+        self.setSexo(dados[2])
+        self.setEspecialidade(dados[3])
+        self.setLocal(dados[4])
+        self.setIdade(dados[5])
+        self.setEmail(dados[6])
+        self.setInicio(dados[7])
+        self.setFim(dados[8])
+
+    #Agenda
+    def setInicio(self, inicio):
+        self.inicioExpediente = inicio
+
+    def setFim(self, fim):
+        self.fimExpediente = fim
+
+    def getAgenda(self):
+        agenda = list()
+        for i in range(self.inicioExpediente,self.fimExpediente, 1):
+            agenda.append(i)
+
+        return agenda
+
