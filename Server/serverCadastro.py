@@ -28,40 +28,23 @@ class sqlServer:
         #Cria o socket e começa a escutar
         self.createSocketTCP()
 
-
-
-        '''
-        connector = self.getSqlConnector()
-
-        cursor = connector.cursor()
-
-        cursor.execute("DESCRIBE CONSULTAS")
-
-        print(cursor.fetchall())
-        '''
-
-
         print("SERVER INITIALIZED")
 
     def startDB(self):
         sqlConnector = mysql.connector.connect(
-            host="localhost",
-            user="stick",
-            passwd="014412"
+            host="us-cdbr-iron-east-03.cleardb.net",
+            user="b9860fff8b5f63",
+            passwd="7ff7f7a5",
+            database="heroku_c9324f4cb66269f"
         )
 
         cursor = sqlConnector.cursor()
 
-        try:
-            #cursor.execute("DROP DATABASE SearchMed")
-            cursor.execute("CREATE DATABASE SearchMed") #Cria a base de dados
-        except:
-            pass
+        #cursor.execute("DROP DATABASE SearchMed")
+        #cursor.execute("CREATE DATABASE SearchMed") #Cria a base de dados
 
-        try:
-            cursor.execute("USE SearchMed")
-        except:
-            pass
+
+        #cursor.execute("USE SearchMed")
 
         try:
             #Cria a tabela para armazenar o login e a senha
@@ -231,10 +214,10 @@ class sqlServer:
     def getSqlConnector(self):
         #Cria e retorna uma conexão com o banco de dados
         sqlConnector = mysql.connector.connect(
-            host="localhost",
-            user="stick",
-            passwd="014412",
-            database="SearchMed"
+            host="us-cdbr-iron-east-03.cleardb.net",
+            user="b9860fff8b5f63",
+            passwd="7ff7f7a5",
+            database="heroku_c9324f4cb66269f"
         )
 
         return sqlConnector
