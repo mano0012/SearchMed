@@ -11,8 +11,6 @@ class Client:
         self.ip = "127.0.0.1"
         self.port = 9992
 
-        print("CLIENTE CRIADO")
-
     def closeSocket(self):
         try:
             self.sock.close()
@@ -62,8 +60,6 @@ class Client:
             msg = self.loadMessage(self.sock.recv(1024))
             if msg != "exit":
                 msg = input(msg)
-            else:
-                print("SAIU")
 
         print("\n")
 
