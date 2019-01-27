@@ -9,22 +9,26 @@ import medico as m
 MAX_THREADS = 100
 THREAD_BLOCK = 10
 
-IPADDR = "127.0.0.1"
-PORT = 9998
+IPADDR = "127.0.0.1" #IP da maquina onde o servidor esta hospedado
+PORT = 9998 #Porta em que o servidor irá escutar
 
 class sqlServer:
     def __init__(self):
+        #Define atributos do socket
         self.ipAddress = IPADDR
         self.port = PORT
         self.sock = None
 
-        self.doctorList = list()
-
+        #Inicializa a threadPool
         self.threads = threadPool.tPool(self.run, MAX_THREADS, THREAD_BLOCK)
 
+        #Cria a base de dados
+        self.startDB()
+
+        #Cria o socket e começa a escutar
         self.createSocketTCP()
 
-        self.startDB()
+
 
         '''
         connector = self.getSqlConnector()
@@ -50,7 +54,7 @@ class sqlServer:
 
         try:
             #cursor.execute("DROP DATABASE SearchMed")
-            cursor.execute("CREATE DATABASE SearchMed")
+            cursor.execute("CREATE DATABASE SearchMed") #Cria a base de dados
         except:
             pass
 
@@ -60,11 +64,13 @@ class sqlServer:
             pass
 
         try:
+            #Cria a tabela para armazenar o login e a senha
             cursor.execute("CREATE TABLE LOGIN (login VARCHAR(12) PRIMARY KEY NOT NULL, senha VARCHAR(255) NOT NULL)")
         except:
             pass
 
         try:
+            #Cria a tabela pra armazenar os pacientes
             cursor.execute("CREATE TABLE PACIENTE ("
                            "CPF VARCHAR(12) NOT NULL,"
                            "nome VARCHAR(255) NOT NULL,"
@@ -79,6 +85,7 @@ class sqlServer:
             pass
 
         try:
+            #Cria a tabela para armazenar os medicos
             cursor.execute("CREATE TABLE MEDICO ("
                            "CRM VARCHAR(12) NOT NULL,"
                            "nome VARCHAR(255) NOT NULL,"
@@ -97,6 +104,7 @@ class sqlServer:
             pass
 
         try:
+            #Cria a tabela pra armazenar as consultas marcadas
             cursor.execute("CREATE TABLE CONSULTAS("
                            "CRM VARCHAR(12) NOT NULL,"
                            "CPF VARCHAR(12) NOT NULL,"
@@ -112,26 +120,33 @@ class sqlServer:
         sqlConnector.commit()
 
     def waitClient(self):
+        #Servidor espera até que um cliente conecte
         while True:
             con, client = self.sock.accept()
 
             print("Cliente ", client, " conectado")
-            t = self.threads.getThread([con])
+            #Assim que um cliente se conecta, a conexão é passada para uma Thread do ThreadPool
 
-            t.start()
+            t = self.threads.getThread([con]) #Seleciona uma thread
+
+            t.start() #Inicia a thread
 
     def closeSocket(self):
+        #Fecha o socket
         self.sock.close()
 
     def createSocketTCP(self):
+        #Cria um socket TCP
         self.sock = socket.socket(socket.AF_INET,  # Internet
                              socket.SOCK_STREAM)  # TCP
 
-        self.sock.bind((self.ipAddress, self.port))
+        self.sock.bind((self.ipAddress, self.port)) #Define o endereço e a porta
 
-        self.sock.listen(1)
+        self.sock.listen(1) #Começa a escutar
 
     def convertJson(self, message):
+        #Converte uma mensagem para o formato JSON para que possa ser serializada
+
         try:
             msg = json.dumps(message)
             return msg
@@ -139,6 +154,7 @@ class sqlServer:
             return message
 
     def loadJson(self, message):
+        #Pega uma mensagem no formato JSON e recupera para o formato original
         try:
             msg = json.loads(message)
             return msg
@@ -146,9 +162,11 @@ class sqlServer:
             return message
 
     def loadMessage(self, message):
+        #Desserializa a mensagem e transforma no formato original
         return self.loadJson(pickle.loads(message))
 
     def prepareMsg(self, msg):
+        #Converte uma mensagem para JSON e depois serializa para que possa ser enviada
         jsonMsg = self.convertJson(msg)
 
         serializedMsg = pickle.dumps(jsonMsg)
@@ -156,18 +174,22 @@ class sqlServer:
         return serializedMsg
 
     def getMessage(self, connection):
+        #Recebe a mensagem e faz os procedimentos necessarios para recuperar sua informação
         serializedMsg = connection.recv(1024)
         msg = self.loadMessage(serializedMsg)
         return msg
 
     def cadastrarUsuario(self, tipo, connection):
-        if tipo == "1":
+        #Cadastra um usuario (Paciente ou medico)
+        if tipo == "1": #Selecionado paciente
+            #Setta atributos especificos da classe
             user = p.Paciente()
             connection.send(self.prepareMsg("Digite o CPF do paciente: "))
             user.setCPF(self.getMessage(connection))
             connection.send(self.prepareMsg("Digite a cidade do paciente: "))
             user.setCidade(self.getMessage(connection))
-        elif tipo == "2":
+        elif tipo == "2": #Selecionado Medico
+            # Setta atributos especificos da classe
             user = m.Medico()
             connection.send(self.prepareMsg("Digite o CRM do medico: "))
             user.setCRM(self.getMessage(connection))
@@ -183,6 +205,7 @@ class sqlServer:
             connection.send(self.prepareMsg("Fim: "))
             user.setFim(self.getMessage(connection))
 
+        #Setta atributos comuns as duas classes
         connection.send(self.prepareMsg("Digite o nome: "))
         user.setNome(self.getMessage(connection))
         connection.send(self.prepareMsg("Digite o sexo: "))
@@ -197,15 +220,16 @@ class sqlServer:
         connection.send(self.prepareMsg("Confirme a senha: "))
         conf = self.getMessage(connection)
 
-        while (senha != conf or len(senha) < 6):
+        while (senha != conf or len(senha) < 6 or len(senha) > 14): #Verifica formatação da senha
             connection.send(self.prepareMsg("Senha invalida, digite novamente: "))
             senha = self.getMessage(connection)
             connection.send(self.prepareMsg("Confirme a senha: "))
             conf = self.getMessage(connection)
 
-        return self.cadastra(tipo, user, senha)
+        return self.cadastra(tipo, user, senha) #Uma vez que tudo está settado corretamente, passa o objeto para ser armazenado no BD
 
     def getSqlConnector(self):
+        #Cria e retorna uma conexão com o banco de dados
         sqlConnector = mysql.connector.connect(
             host="localhost",
             user="stick",
@@ -216,7 +240,7 @@ class sqlServer:
         return sqlConnector
 
     def cadastra(self, tipo, user, passwd):
-        if tipo == "1":
+        if tipo == "1": #Caso seja paciente
             try:
                 val = (user.CPF, passwd)
                 self.realizaInsercaoSQL("INSERT INTO LOGIN (login, senha) VALUES (%s, %s)", val)
@@ -224,10 +248,10 @@ class sqlServer:
                 val = (user.CPF, user.nome, int(user.idade), user.sexo, user.cidade, user.email)
                 self.realizaInsercaoSQL("INSERT INTO PACIENTE(CPF, nome, idade, sexo, cidade, email) VALUES (%s, %s, %s, %s, %s, %s)", val)
 
-                return True
+                return True #Sucesso no cadastro
             except:
-                return False
-        elif tipo == "2":
+                return False #Falha no cadastro
+        elif tipo == "2": #Caso seja Medico
             try:
                 val = (user.CRM, passwd)
                 self.realizaInsercaoSQL("INSERT INTO LOGIN (login, senha) VALUES (%s, %s)", val)
@@ -237,15 +261,17 @@ class sqlServer:
 
                 self.realizaInsercaoSQL("INSERT INTO MEDICO(CRM, nome, sexo, especialidade, local, idade, email, horarioInicio, horarioFim, convenio) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", val)
 
-                return True
+                return True #Sucesso no cadastro
             except:
-                return False
+                return False #Falha no cadastro
 
     def mainMenu(self):
+        #Tela inicial
         msg = "Menu\n1 - Login\n2 - Cadastro\n0 - Sair\nSelecione uma opção: "
         return msg
 
     def autentica(self, tipo, connection):
+        #Tela login
         connection.send(self.prepareMsg("Digite o CPF ou CRM: "))
         login = self.getMessage(connection)
         connection.send(self.prepareMsg("Digite a senha: "))
@@ -254,7 +280,7 @@ class sqlServer:
         cont = 1
 
         val = (login, senha)
-        results = self.realizaConsultaSQL("SELECT login FROM LOGIN where login = %s and senha = %s", val)
+        results = self.realizaConsultaSQL("SELECT login FROM LOGIN where login = %s and senha = %s", val) #Verifica se o usuario e a senha existem no BD
 
         while len(results) != 1:
             cont += 1
@@ -269,34 +295,37 @@ class sqlServer:
             val = (login, senha)
             results = self.realizaConsultaSQL("SELECT login FROM LOGIN where login = %s and senha = %s", val)
 
-        if cont < 4:
-            if tipo == "1":
+        if cont < 4: #Caso consiga logar sem exceder as 3 tentativas
+            if tipo == "1": #Paciente
                 results = self.realizaConsultaSQL("SELECT * FROM PACIENTE WHERE CPF = " + login)
 
                 paciente = p.Paciente()
-                paciente.createPaciente(results[0])
+                paciente.createPaciente(results[0]) #Setta os atributos do paciente
                 return paciente
-            elif tipo == "2":
+            elif tipo == "2": #Medico
                 results = self.realizaConsultaSQL("SELECT * FROM MEDICO WHERE CRM = " + login)
 
                 medico = m.Medico()
-                medico.createMedico(results[0])
+                medico.createMedico(results[0]) #Setta os atributos do medico
                 return medico
         else:
-            #Estourou as tentativas
-            connection.send(self.prepareMsg("exit"))
+            #Estourou as 3 tentativas
+            connection.send(self.prepareMsg("exit")) #Avisa ao cliente que a conexão será fechada
             return None
 
     def showMenuPaciente(self):
+        #Tela após logado do Paciente
         menu = "1 - Realizar consulta\n2 - Verificar consultas\n0 - Sair\nSelecione uma opção: "
         return menu
 
     def getMedicos(self, cidade, especialidade):
+        #Procura no BD todos os medicos de uma determinada regiao e determinada especialidade
         result = self.realizaConsultaSQL("Select * from MEDICO where local = %s and especialidade = %s", (cidade, especialidade))
 
         return result
 
     def realizaConsultaSQL(self, querry, vars = None):
+        #Faz a consulta no Banco de dados de acordo com a querry e as variaveis passadas por paramentro e retorna o resultado
         connector = self.getSqlConnector()
         cursor = connector.cursor()
 
@@ -312,6 +341,7 @@ class sqlServer:
         return results
 
     def realizaInsercaoSQL(self, querry, vars = None):
+        #Faz a inserção (ou atualização) de acordo com a querry e as variaveis passadas e retorna se a querry foi executada com sucesso ou não
         connector = self.getSqlConnector()
         cursor = connector.cursor()
 
@@ -322,14 +352,15 @@ class sqlServer:
 
             connector.close()
             return True
-        except e:
-            print(e)
+        except:
             return False
 
     def alteraLocalizacao(self, medico, novaLocalizacao):
+        #Altera a localização do medico
         return self.realizaInsercaoSQL("UPDATE MEDICO SET local = %s WHERE CRM = %s", (novaLocalizacao, medico))
 
     def horariosDisponiveis(self, medico, dia):
+        #Cria a lista de horarios disponiveis
         agenda = medico.getAgenda()
 
         results = self.realizaConsultaSQL("Select * from CONSULTAS WHERE CRM = %s and dia = %s", (medico.CRM, int(dia)))
@@ -340,22 +371,26 @@ class sqlServer:
         return agenda
 
     def addConsulta(self, medico, paciente, dia, horario):
+        #Adiciona uma nova consulta no banco de dados
         return self.realizaInsercaoSQL("INSERT INTO CONSULTAS(CRM,CPF,dia,hora) VALUES (%s,%s,%s,%s)", (medico, paciente, int(dia), horario))
 
     def getConsultasPaciente(self, paciente):
+        #Busca as consultas de um determinado paciente
         return self.realizaConsultaSQL("SELECT * FROM CONSULTAS WHERE CPF = " + paciente + " ORDER BY dia")
 
     def getConsultasMedico(self, medico):
+        #Busca as consultas de um determinado medico
         return self.realizaConsultaSQL("SELECT * FROM CONSULTAS WHERE CRM = " + medico + " ORDER BY dia")
 
 
     def funcPaciente(self, paciente, connection):
+        #Menu do paciente depois de logado
         connection.send(self.prepareMsg(self.showMenuPaciente()))
 
         option = self.getMessage(connection)
 
         while(option != "0"):
-            if option == "1":
+            if option == "1": #Criar consulta
                 connection.send(self.prepareMsg("Digite a cidade de interesse: "))
                 cidade = self.getMessage(connection)
 
@@ -406,7 +441,7 @@ class sqlServer:
                                 msg = "Consulta marcada com sucesso\n\n"
                             else:
                                 msg = "Nao foi possivel marcar a consulta\n\n"
-            elif option == "2":
+            elif option == "2": #Verificar consultas marcadas
                 msg = "Consultas Marcadas:\n\n"
                 result = self.getConsultasPaciente(paciente.CPF)
 

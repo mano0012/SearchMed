@@ -22,28 +22,8 @@ class Client:
                              socket.SOCK_STREAM)  # TCP
 
     def run(self):
-        op = 1
-
         self.createSocketTCP()
         self.connect()
-        '''
-        while op != 0:
-            op = self.getService()
-
-            print("Menu")
-
-            for i in range(len(self.serviceList)):
-                print(i+1, "- ", self.serviceList[i])
-
-            print("0 - Sair")
-
-            op = int(input("Selecione o serviço: "))
-
-            while op < 0 or op > len(self.serviceList):
-                op = int(input("Serviço invalido, digite novamente: "))
-
-            self.selectService(op)
-        '''
 
     def connect(self):
         self.sock.connect((SERVER_IP, SERVER_PORT))
@@ -52,6 +32,7 @@ class Client:
 
         msg = "getServices"
 
+        #Loop principal do cliente
         while msg != "exit":
             # Request
             self.sendTCP(self.prepareMsg(msg))
