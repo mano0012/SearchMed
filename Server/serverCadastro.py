@@ -454,13 +454,13 @@ class sqlServer:
                 msg = "Agenda:\n\n"
                 result = self.getConsultasMedico(medico.CRM)
 
-                print(result)
-
-                for i in result:
-                    dadosConsulta = self.realizaConsultaSQL("Select nome FROM PACIENTE where CPF = " + i[1])
-                    msg += "Paciente: " + dadosConsulta[0][0] + "\nDia: " + str(i[2]) + "\nHorario: " + i[
-                        3] + "\n\n"
-
+                if len(result) < 1:
+                    msg += "Não há consultas marcadas\n\n"
+                else:
+                    for i in result:
+                        dadosConsulta = self.realizaConsultaSQL("Select nome FROM PACIENTE where CPF = " + i[1])
+                        msg += "Paciente: " + dadosConsulta[0][0] + "\nDia: " + str(i[2]) + "\nHorario: " + i[
+                            3] + "\n\n"
             elif option == "2":
                 connection.send(self.prepareMsg("Digite a nova localização: "))
                 local = self.getMessage(connection)
